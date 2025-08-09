@@ -3,11 +3,11 @@ Flask-SQLAlchemy
 Flask-Login
 Werkzeug
 yt-dlp
-stable-whisper
-numpy
+opencv-python
+mediapipe
 Pillow
 torch
 transformers
+gunicorn
 pyannote.audio
-opencv-python
-supbscross
+git+https://github.com/jianfch/stable-ts.git@d8a0c242964b971a82914c6225667a421b849319
