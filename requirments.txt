@@ -1,0 +1,13 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
+yt-dlp
+stable-whisper
+numpy
+Pillow
+torch
+transformers
+pyannote.audio
+opencv-python
+supbscross
