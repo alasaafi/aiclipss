@@ -33,7 +33,7 @@ class ContentAnalyzer:
             self.message_queue.put(("log", "     🧠 Initializing Speaker Diarization pipeline..."))
             try:
                 # Use the environment variable for the token
-                huggingface_token = os.environ.get("HUGGING_FACE_TOKEN")
+                huggingface_token = os.environ.get("HUGGINGFACE_TOKEN")
                 
                 # Check if the token is available
                 if not huggingface_token:
