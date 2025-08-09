@@ -26,7 +26,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- Folder Configuration ---
-os.environ["PATH"] += os.pathsep + r"C:\\ffmpeg\\bin"
+# os.environ["PATH"] += os.pathsep + r"C:\\ffmpeg\\bin" # <-- Ligne commentée pour ne pas interférer avec le déploiement sur Linux
 DOWNLOAD_FOLDER = Path("downloaded_clips")
 TEMP_FOLDER = Path("temp_assets")
 LOGS_FOLDER = Path("logs")
@@ -260,7 +260,7 @@ def process_video_request():
                     return jsonify({"status": "error", "message": f"Free tier clips are limited to {FREE_TIER_MAX_DURATION} seconds. Upgrade to Pro for longer clips!"}), 403
 
             if not (1 <= num_clips <= 10) or not (15 <= clip_duration_arg <= 180):
-                 raise ValueError("Clip settings are outside the allowed range.")
+                    raise ValueError("Clip settings are outside the allowed range.")
 
         except (ValueError, TypeError) as e:
             app.logger.error(f"Invalid form input in /process_video: {e}")
@@ -574,11 +574,11 @@ if __name__ == '__main__':
         db.create_all()
         # Check if the 'email' column exists, and if not, add it
         if not hasattr(User, 'email'):
-             print("Adding 'email' column to User table...")
-             with db.engine.connect() as connection:
+              print("Adding 'email' column to User table...")
+              with db.engine.connect() as connection:
                 connection.execute(db.text('ALTER TABLE user ADD COLUMN email VARCHAR(150) UNIQUE'))
                 connection.commit()
-             print("Column 'email' added successfully. Database needs to be reset or a value populated for existing users.")
+              print("Column 'email' added successfully. Database needs to be reset or a value populated for existing users.")
 
         if not User.query.filter_by(username='admin').first():
             admin_user = User(username='admin', email='admin@example.com', tier='business', is_admin=True)
