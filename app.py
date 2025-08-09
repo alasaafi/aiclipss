@@ -26,7 +26,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- Folder Configuration ---
-# os.environ["PATH"] += os.pathsep + r"C:\\ffmpeg\\bin" # <-- Ligne commentée pour ne pas interférer avec le déploiement sur Linux
+# os.environ["PATH"] += os.pathsep + r"C:\\ffmpeg\\bin" # <-- Line commented out
 DOWNLOAD_FOLDER = Path("downloaded_clips")
 TEMP_FOLDER = Path("temp_assets")
 LOGS_FOLDER = Path("logs")
