@@ -1,3 +1,4 @@
+# analysis.py
 import torch
 from transformers import pipeline
 from pyannote.audio import Pipeline as PyannotePipeline
@@ -5,6 +6,7 @@ import numpy as np
 import subprocess
 import random 
 import re 
+import os # <-- os is needed to access environment variables
 
 class ContentAnalyzer:
     def __init__(self, message_queue):
@@ -30,9 +32,16 @@ class ContentAnalyzer:
         if self.diarization_pipeline is None:
             self.message_queue.put(("log", "     🧠 Initializing Speaker Diarization pipeline..."))
             try:
+                # Use the environment variable for the token
+                huggingface_token = os.environ.get("HUGGING_FACE_TOKEN")
+                
+                # Check if the token is available
+                if not huggingface_token:
+                    raise ValueError("Hugging Face token not found in environment variables.")
+
                 self.diarization_pipeline = PyannotePipeline.from_pretrained(
                     "pyannote/speaker-diarization-pipeline",
-                    use_auth_token=True
+                    use_auth_token=huggingface_token
                 )
                 self.diarization_pipeline.to(torch.device(self.device))
                 self.message_queue.put(("log", "     ✅ Speaker pipeline ready."))

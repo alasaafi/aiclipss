@@ -4,10 +4,11 @@ Flask-Login
 Werkzeug
 yt-dlp
 opencv-python
-mediapipe
+mediapipe==0.10.14
 Pillow
 torch
 transformers
+datetime
 gunicorn
 pyannote.audio
 git+https://github.com/jianfch/stable-ts.git
