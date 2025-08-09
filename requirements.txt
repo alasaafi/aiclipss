@@ -10,4 +10,4 @@ torch
 transformers
 gunicorn
 pyannote.audio
-git+https://github.com/jianfch/stable-ts.git@d8a0c242964b971a82914c6225667a421b849319
+git+https://github.com/jianfch/stable-ts.git
