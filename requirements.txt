@@ -9,6 +9,7 @@ Pillow
 torch
 transformers
 datetime
+waitress
 gunicorn
 pyannote.audio
 git+https://github.com/jianfch/stable-ts.git
