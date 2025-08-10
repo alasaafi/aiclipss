@@ -593,4 +593,5 @@ if __name__ == '__main__':
         print("FFmpeg is not found or not working correctly. Please install FFmpeg and ensure it's in your system's PATH.")
         sys.exit(1)
         
-    app.run(debug=True, host='0.0.0.0')
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host='0.0.0.0', port=port)
