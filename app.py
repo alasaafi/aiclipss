@@ -22,11 +22,11 @@ app = Flask(__name__)
 
 # --- Configuration for Database and Login ---
 app.config['SECRET_KEY'] = 'a-super-secret-key-that-you-should-change'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# For Render, this should be set via an environment variable
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- Folder Configuration ---
-# os.environ["PATH"] += os.pathsep + r"C:\\ffmpeg\\bin" # <-- Line commented out
 DOWNLOAD_FOLDER = Path("downloaded_clips")
 TEMP_FOLDER = Path("temp_assets")
 LOGS_FOLDER = Path("logs")
@@ -58,13 +58,11 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
-    # Add a new email column
     email = db.Column(db.String(150), unique=True, nullable=False)
     tier = db.Column(db.String(50), default='free', nullable=False)
     clip_count_today = db.Column(db.Integer, default=0, nullable=False)
     last_clip_date = db.Column(db.Date, default=date.today(), nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
-
     processes = db.relationship('VideoProcess', backref='user', lazy=True)
 
     def set_password(self, password):
@@ -80,7 +78,7 @@ class VideoProcess(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     clips = db.relationship('Clip', backref='process', lazy=True, cascade="all, delete-orphan")
     source_url = db.Column(db.String(500))
-    status = db.Column(db.String(20), default='processing', nullable=False) # New status field
+    status = db.Column(db.String(20), default='processing', nullable=False)
 
 class Clip(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -111,6 +109,11 @@ def admin_required(f):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/health')
+def health_check():
+    """A simple health check endpoint for Render's health monitoring."""
+    return "OK", 200
 
 # --- Authentication Routes ---
 @app.route('/signup', methods=['GET', 'POST'])
@@ -174,7 +177,6 @@ def logout():
 def dashboard():
     user_processes = VideoProcess.query.filter_by(user_id=current_user.id).order_by(VideoProcess.created_at.desc()).all()
     
-    # Correction : S'assurer que l'URL est générée seulement si la session est active.
     live_session_id = session.get('processing_session_id')
     live_process = None
     live_process_thumbnail_url = None
@@ -190,7 +192,7 @@ def dashboard():
             session.pop('processing_session_id', None)
             live_process = None
     
-    notification_count = 3
+    notification_count = 3 # Placeholder
     has_notifications = notification_count > 0
 
     return render_template(
@@ -215,7 +217,7 @@ def process_video_request():
         FREE_TIER_MAX_DURATION = 90
         FREE_TIER_RESOLUTION = (720, 1280)
         PRO_TIER_RESOLUTION = (1080, 1920)
-        BUSINESS_TIER_RESOLUTION = (1080, 2048)  # Added 8K resolution for business plan
+        BUSINESS_TIER_RESOLUTION = (1080, 2048)
 
         if current_user.tier == 'free':
             if current_user.last_clip_date != date.today():
@@ -224,7 +226,7 @@ def process_video_request():
                 db.session.commit()
             
             if current_user.clip_count_today >= FREE_TIER_CLIP_LIMIT:
-                return jsonify({"status": "error", "message": f"Free tier limit reached. You can only generate {FREE_TIER_CLIP_LIMIT} clips per day. Upgrade to Pro for unlimited clips!"}), 403
+                return jsonify({"status": "error", "message": f"Free tier limit reached. You can only generate {FREE_TIER_CLIP_LIMIT} clips per day."}), 403
 
         data = request.form
         url = data.get('youtube_url')
@@ -246,21 +248,17 @@ def process_video_request():
             return jsonify({"status": "error", "message": "Please enter a YouTube URL."}), 400
 
         try:
-            if clip_length_str is None or num_clips_str is None:
-                raise ValueError("Missing clip length or number of clips in submission.")
-
             num_clips = int(num_clips_str)
             clip_duration_arg = int(clip_length_str)
 
             if current_user.tier == 'free':
                 if (current_user.clip_count_today + num_clips) > FREE_TIER_CLIP_LIMIT:
-                     return jsonify({"status": "error", "message": f"Generating this many clips would exceed your free tier limit of {FREE_TIER_CLIP_LIMIT} per day. You have {FREE_TIER_CLIP_LIMIT - current_user.clip_count_today} clips remaining."}), 403
-
+                    return jsonify({"status": "error", "message": f"Generating this many clips would exceed your free tier limit of {FREE_TIER_CLIP_LIMIT} per day."}), 403
                 if clip_duration_arg > FREE_TIER_MAX_DURATION:
-                    return jsonify({"status": "error", "message": f"Free tier clips are limited to {FREE_TIER_MAX_DURATION} seconds. Upgrade to Pro for longer clips!"}), 403
+                    return jsonify({"status": "error", "message": f"Free tier clips are limited to {FREE_TIER_MAX_DURATION} seconds."}), 403
 
             if not (1 <= num_clips <= 10) or not (15 <= clip_duration_arg <= 180):
-                    raise ValueError("Clip settings are outside the allowed range.")
+                raise ValueError("Clip settings are outside the allowed range.")
 
         except (ValueError, TypeError) as e:
             app.logger.error(f"Invalid form input in /process_video: {e}")
@@ -289,25 +287,18 @@ def process_video_request():
         session_download_folder.mkdir(exist_ok=True, parents=True)
         session_temp_folder.mkdir(exist_ok=True, parents=True)
         log_file_path = LOGS_FOLDER / f"log_{session_id}.txt"
-        if log_file_path.exists():
-            log_file_path.unlink()
 
         target_resolution = PRO_TIER_RESOLUTION
         if current_user.tier == 'free':
             target_resolution = FREE_TIER_RESOLUTION
         elif current_user.tier == 'business':
-            # FIX: Use the new BUSINESS_TIER_RESOLUTION
             target_resolution = BUSINESS_TIER_RESOLUTION
 
         args = (
-            app,
-            process_db_id,
-            url, num_clips, clip_duration_arg,
+            app, process_db_id, url, num_clips, clip_duration_arg,
             add_captions, font_choice, caption_style,
-            session_download_folder,
-            session_temp_folder,
-            log_file_path,
-            target_resolution
+            session_download_folder, session_temp_folder,
+            log_file_path, target_resolution
         )
 
         thread = threading.Thread(target=run_clipping_pipeline, args=args, daemon=True)
@@ -316,8 +307,7 @@ def process_video_request():
         return jsonify({"status": "processing", "redirect_url": url_for('dashboard')}), 202
     except Exception as e:
         app.logger.error(f"An unhandled error occurred in /process_video: {e}\n{traceback.format_exc()}")
-        return jsonify({"status": "error", "message": "An internal server error occurred. Please try again later."}), 500
-
+        return jsonify({"status": "error", "message": "An internal server error occurred."}), 500
 
 # --- Clipping Pipeline Runner ---
 def run_clipping_pipeline(flask_app, process_db_id, url, num_clips, clip_duration_arg, add_captions, font_choice, caption_style, session_download_folder, session_temp_folder, log_file_path, target_resolution):
@@ -348,7 +338,7 @@ def run_clipping_pipeline(flask_app, process_db_id, url, num_clips, clip_duratio
                     )
                     db.session.add(new_clip)
                 
-                process_entry.status = 'completed' # Set status to completed
+                process_entry.status = 'completed'
                 db.session.commit()
             
             final_metadata_path = session_download_folder / "metadata.json"
@@ -357,10 +347,9 @@ def run_clipping_pipeline(flask_app, process_db_id, url, num_clips, clip_duratio
                 
             log_to_file("log", "PROCESSING_COMPLETE: All clips generated and metadata saved to dashboard.")
         except Exception as e:
-            import traceback
             log_to_file("log", f"PROCESSING_ERROR: {e}\n{traceback.format_exc()}")
             if process_entry:
-                process_entry.status = 'error' # Set status to error
+                process_entry.status = 'error'
                 db.session.commit()
         finally:
             db.session.remove()
@@ -397,7 +386,6 @@ def delete_process(session_id):
             except OSError as e:
                 app.logger.error(f"Error deleting log file {log_file_path}: {e}")
                 
-        # Clear the session state for a live job after deletion
         if session.get('processing_session_id') == session_id:
             session.pop('processing_session_id', None)
 
@@ -418,23 +406,19 @@ def purchase_tier(tier_name):
         return jsonify({"status": "error", "message": "Invalid tier."}), 400
     
     if tier_name == 'pro':
-        # Redirect to Gumroad for the Pro plan
         return jsonify({
             "status": "redirect",
             "message": "Redirecting to Gumroad to complete your purchase.",
             "redirect_url": "https://aiclips.gumroad.com/l/jxjgx"
         })
     
-    # This part of the code is now for internal tier management (like a manual upgrade from admin)
-    # The user flow is now to go to Gumroad and then an admin manually updates their account.
-    # We will keep this here to avoid breaking the business tier, and to show how a manual change would be handled
     current_user.tier = tier_name
     current_user.clip_count_today = 0
     current_user.last_clip_date = date.today()
     db.session.commit()
 
     flash(f'Successfully upgraded to {tier_name.upper()} plan!', 'success')
-    return jsonify({"status": "success", "message": f"Upgraded to {tier_name} plan. Redirecting to dashboard."}), 200
+    return jsonify({"status": "success", "message": f"Upgraded to {tier_name} plan."}), 200
 
 # --- Webhook endpoint to handle Gumroad purchases ---
 @app.route('/gumroad-webhook', methods=['POST'])
@@ -442,10 +426,6 @@ def gumroad_webhook():
     data = request.form
     product_id = data.get('product_id')
     customer_email = data.get('email')
-
-    # IMPORTANT: You should verify the webhook request here.
-    # Gumroad provides a "secret key" for this purpose. 
-    # For a real application, you would compare a hash.
 
     PRO_PLAN_GUMROAD_PRODUCT_ID = "jxjgx" 
 
@@ -501,6 +481,7 @@ def admin_gift_plan():
 
 # --- Utility Routes ---
 @app.route('/logs/<session_id>')
+@login_required
 def stream_logs(session_id):
     def generate():
         log_file_path = LOGS_FOLDER / f"log_{session_id}.txt"
@@ -531,6 +512,7 @@ def stream_logs(session_id):
     return app.response_class(generate(), mimetype='text/event-stream')
 
 @app.route('/get_clips_metadata/<session_id>')
+@login_required
 def get_clips_metadata(session_id):
     metadata_file = DOWNLOAD_FOLDER / session_id / "metadata.json"
     if metadata_file.exists():
@@ -541,16 +523,13 @@ def get_clips_metadata(session_id):
         return jsonify({"status": "error", "message": "Processing not finished or metadata not found."}), 404
 
 @app.route('/download/<session_id>/<filename>')
+@login_required
 def download_clip(session_id, filename):
     return send_from_directory(DOWNLOAD_FOLDER / session_id, filename, as_attachment=True)
 
 @app.route('/thumbnail/<session_id>/<filename>')
+@login_required
 def serve_thumbnail(session_id, filename):
-    """
-    Serves a thumbnail image from a specific session's folder.
-    Note: Your business logic (main_logic.py) must be updated
-    to generate and save the thumbnail file (e.g., "thumbnail.jpg").
-    """
     thumbnail_folder = DOWNLOAD_FOLDER / session_id
     if not thumbnail_folder.exists():
         return jsonify({"status": "error", "message": "Thumbnail not found."}), 404
@@ -568,18 +547,11 @@ def perform_upload():
     data = request.json
     return jsonify({"status": "upload_started", "message": "Upload process initiated."})
 
-# --- Main Execution ---
+# --- Main Execution (for local development) ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Check if the 'email' column exists, and if not, add it
-        if not hasattr(User, 'email'):
-              print("Adding 'email' column to User table...")
-              with db.engine.connect() as connection:
-                connection.execute(db.text('ALTER TABLE user ADD COLUMN email VARCHAR(150) UNIQUE'))
-                connection.commit()
-              print("Column 'email' added successfully. Database needs to be reset or a value populated for existing users.")
-
+        # Create a default admin user if one doesn't exist
         if not User.query.filter_by(username='admin').first():
             admin_user = User(username='admin', email='admin@example.com', tier='business', is_admin=True)
             admin_user.set_password('adminpass')
@@ -587,11 +559,14 @@ if __name__ == '__main__':
             db.session.commit()
             print("Admin user 'admin' created with password 'adminpass'")
 
+    # Check for FFmpeg on startup (for local development)
     try:
         subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
     except (FileNotFoundError, subprocess.CalledProcessError):
-        print("FFmpeg is not found or not working correctly. Please install FFmpeg and ensure it's in your system's PATH.")
+        print("WARNING: FFmpeg is not found or not working correctly. Please install FFmpeg and ensure it's in your system's PATH.")
         sys.exit(1)
         
+    # Note: This runs the Flask development server.
+    # For production on Render, use a WSGI server like Waitress via the `wsgi.py` file.
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)
