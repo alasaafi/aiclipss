@@ -5,65 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>velva.clip - AI Video Clipper</title>
     
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Anton&family=Gabarito:wght@700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* ==================================== */
-        /* === THEME: OPUS CLIP WHITE         === */
-        /* ==================================== */
         :root {
-            --bg-color: #ffffff;
-            --card-bg: #f8f9fa;
-            --primary-accent: #8b5cf6;
-            --primary-light: #a78bfa;
-            --font-color: #212529;
-            --font-light: #6c757d; /* Darker for readability on white */
-            --border-color: #dee2e6;
-            --input-bg: #ffffff;
-            --input-focus: #e9e8ed;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --glow-color: rgba(139, 92, 246, 0.3);
-            --danger-color: #dc3545;
-            --danger-color-dark: #c82333;
-
-            /* Gradients adapted to white/gray */
-            --gradient-main: linear-gradient(90deg, var(--primary-accent) 0%, var(--primary-light) 100%);
-            --gradient-hover: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-accent) 100%);
-            
-            /* Shadows are mostly subtle, based on light tones */
-            --shadow-xsm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-            
-            --border-radius-xl: 20px;
-            --border-radius-lg: 12px;
-            --border-radius-md: 8px;
-            --border-radius-sm: 4px;
-
-            --transition-duration: 0.3s;
-            --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --bs-body-font-family: 'Inter', sans-serif;
+            --bs-body-bg: #f8f9fa;
+            --bs-body-color: #212529;
+            --bs-primary: #8b5cf6;
+            --bs-primary-rgb: 139, 92, 246;
+            --bs-secondary: #6c757d;
+            --bs-success: #44bd32;
+            --bs-danger: #dc3545;
+            --bs-border-color: #dee2e6;
+            --bs-card-bg: #ffffff;
+            --bs-shadow-md: 0 .5rem 1rem rgba(0,0,0,.15);
+            --bs-shadow-lg: 0 1rem 3rem rgba(0,0,0,.175);
+            --form-gap-sm: 0.5rem;
+            --form-gap-lg: 1.5rem;
         }
 
-        /* ==================================== */
-        /* === STYLES DE BASE ET ARRIÈRE-PLAN === */
-        /* ==================================== */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--font-color);
+            font-family: var(--bs-body-font-family);
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             position: relative;
         }
 
-        /* Effet d'arrière-plan de halo lumineux */
         body::before {
             content: '';
             position: fixed;
@@ -71,198 +46,74 @@
             left: -200px;
             width: 500px;
             height: 500px;
-            background: radial-gradient(circle, var(--primary-accent) 0%, transparent 70%);
+            background: radial-gradient(circle, var(--bs-primary) 0%, transparent 70%);
             opacity: 0.15;
             animation: moveHalo 20s ease-in-out infinite alternate;
             z-index: -1;
         }
-        
+
         @keyframes moveHalo {
             from { transform: translate(0, 0); }
             to { transform: translate(400px, 400px); }
         }
-        
+
         @keyframes fadeInSlideUp {
             0% { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-on-load { animation: fadeInSlideUp 0.8s var(--transition-ease) forwards; opacity: 0; }
+        .animate-on-load { animation: fadeInSlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
         
-        /* ==================================== */
-        /* === TYPOGRAPHIE ET TITRE ANIMÉ === */
-        /* ==================================== */
-        @keyframes animate-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        h1, h2, h3 { font-weight: 700; line-height: 1.2; }
-        h1 { 
-            font-size: 2.8rem; 
-            background: var(--gradient-main); 
-            -webkit-background-clip: text; 
-            background-clip: text; 
-            color: transparent; 
-            margin-bottom: 1.5rem; 
-            text-align: center; 
-            background-size: 200% auto; 
-            animation: animate-gradient 5s ease-in-out infinite; 
-        }
-        h2 { 
-            font-size: 1.75rem; 
-            color: var(--font-color); 
-            border-bottom: 1px solid var(--border-color); 
-            padding-bottom: 0.75rem; 
-            margin-bottom: 1.5rem; 
-        }
-        p { color: var(--font-light); margin-bottom: 1rem; }
-
-        /* ==================================== */
-        /* === MISE EN PAGE PRINCIPALE === */
-        /* ==================================== */
-        .main-layout-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 0.6fr; 
-            align-items: center; 
-            gap: 4rem; 
-            max-width: 1280px; 
-            margin: 2rem auto; 
-            padding: 0 2rem;
-        }
-        .container { 
-            background: var(--bg-color); 
-            padding: 2.5rem; 
-            border-radius: var(--border-radius-xl); 
-            box-shadow: var(--shadow-lg); 
-            border: 1px solid var(--border-color); 
-            width: 100%;
+        .animated-gradient-text .word {
+            display: inline-block;
+            transition: color 0.5s ease-in-out;
+            background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: animate-gradient 5s ease-in-out infinite;
         }
         
-        /* ==================================== */
-        /* === EN-TÊTE ET NAVIGATION === */
-        /* ==================================== */
-        header { 
-            padding: 1.25rem 2rem; 
-            background: rgba(255, 255, 255, 0.8); /* Light background */
-            backdrop-filter: blur(10px); 
-            border-bottom: 1px solid var(--border-color); 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
+        @keyframes animate-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .nav-container { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            gap: 1rem;
-        }
-        .logo { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.75rem; 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            color: var(--font-color); /* Dark color for visibility */
-            text-decoration: none; 
-            height: 40px; 
-        }
-        .logo svg { display: none; }
-        .logo img {
-            height: 100%; 
-            width: auto;
-            display: block;
-        }
-        .nav-links { 
-            display: flex; 
-            align-items: center; 
-            gap: 2rem; 
-            transition: transform 0.4s ease-in-out;
-        }
-        .nav-links a { 
-            color: var(--font-light); 
-            text-decoration: none; 
-            font-weight: 600; 
-            font-size: 0.95rem; 
-            transition: all var(--transition-duration) var(--transition-ease); 
-            position: relative; 
-            padding-bottom: 4px; 
-        }
-        .nav-links a:hover { color: var(--primary-accent); }
-        .nav-links a::after { 
-            content: ''; 
-            position: absolute; 
-            bottom: 0; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 0; 
-            height: 2px; 
-            background: var(--gradient-main); 
-            transition: width var(--transition-duration) var(--transition-ease); 
-        }
-        .nav-links a:hover::after { width: 100%; }
-        .nav-actions { display: flex; gap: 1rem; }
         
-        .hamburger {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            z-index: 200; 
-        }
-        .hamburger .line { 
-            width: 28px; 
-            height: 3px; 
-            background: var(--font-color); /* Dark color for visibility */
-            margin: 5px; 
-            transition: all 0.3s ease-in-out; 
-            border-radius: 2px;
-        }
-        .hamburger.active .line:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
-        .hamburger.active .line:nth-child(2) { opacity: 0; }
-        .hamburger.active .line:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
+        .shadow-lg { box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; }
+        .rounded-xl { border-radius: 1.5rem!important; }
 
-        .btn { 
-            padding: 0.8rem 1.8rem; 
-            border-radius: var(--border-radius-lg); 
-            text-decoration: none; 
-            font-weight: 600; 
-            font-size: 1.05rem; 
-            transition: all var(--transition-duration) var(--transition-ease); 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 0.75rem; 
-        }
-        .btn-login { 
-            background-color: transparent; 
-            border-radius: 3.5rem;
-            border: 1px solid var(--border-color); 
-            color: var(--font-color); 
-        }
-        .btn-login:hover { background-color: var(--card-bg); }
-        .btn-signup { 
-            background: var(--gradient-main); 
-            color: #fff; /* White text for contrast */
-            border-radius: 3.5rem; 
-            border: none; 
-            box-shadow: var(--shadow-md); 
-            background-size: 200% auto; 
-        }
-        .btn-signup:hover { 
-            background-position: right center; 
-            transform: translateY(-3px); 
-            box-shadow: var(--shadow-lg); 
+        header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
         }
 
-        /* ==================================== */
-        /* === PRÉVISUALISATION VIDÉO === */
-        /* ==================================== */
+        .main-container {
+            max-width: 1280px;
+            margin: 2rem auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        @media (min-width: 576px) {
+            .main-container {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+        
+        .header-title-container {
+            padding: 2rem;
+            text-align: center;
+        }
+
         .video-preview-container {
             margin-top: 1.5rem;
             margin-bottom: 2.5rem;
-            border-radius: var(--border-radius-xl);
+            border-radius: 1.5rem;
             overflow: hidden;
             position: relative;
-            box-shadow: var(--shadow-lg);
             background: #000;
-            transition: all var(--transition-duration) var(--transition-ease);
         }
 
         .video-link-wrapper {
@@ -271,14 +122,20 @@
             text-decoration: none;
             line-height: 0;
         }
-
+        /* Updated video thumbnail and player aspect ratio to 16/9 */
         .video-thumbnail {
             width: 100%;
             height: auto;
             display: block;
             aspect-ratio: 16 / 9;
             object-fit: cover;
-            transition: all var(--transition-duration) var(--transition-ease);
+            transition: all 0.3s ease;
+        }
+        .video-player {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
         }
 
         .play-button {
@@ -295,7 +152,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all var(--transition-duration) var(--transition-ease);
+            transition: all 0.3s ease;
             opacity: 0.9;
         }
 
@@ -309,305 +166,92 @@
             filter: brightness(0.7);
         }
 
-        /* ==================================== */
-        /* === FORMULAIRES ET ÉLÉMENTS DE CONTRÔLE === */
-        /* ==================================== */
-        .input-wrapper { position: relative; width: 100%; }
-        .input-wrapper i { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--font-light); }
-        input[type="text"], input[type="number"], select {
-            width: 100%; 
-            padding: 0.875rem 1rem; 
-            border-radius: var(--border-radius-md); 
-            border: 1px solid var(--border-color);
-            background-color: var(--input-bg);
-            color: var(--font-color); 
-            font-size: 1rem;
-            transition: all var(--transition-duration) var(--transition-ease); 
-            font-family: 'Inter', sans-serif;
-            appearance: none;
+        /* Enhanced input styles for a modern look */
+        .input-group-lg .form-control {
+            border-radius: 2.5rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            border-color: #e2e8f0;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-in-out;
         }
-        #youtube_url { 
-            padding-left: 3.5rem; 
-            font-size: 1.1rem; 
-            padding-top: 1rem; 
-            padding-bottom: 1rem;
-            border-radius: 2.5rem; 
+        .input-group-text {
+            border-radius: 2.5rem 0 0 2.5rem;
+            background-color: #fff;
+            border-color: #e2e8f0;
         }
-        input:focus, select:focus {
-            outline: none; 
-            border-color: var(--primary-accent);
-            box-shadow: 0 0 0 3px var(--glow-color); 
-            background-color: var(--input-bg);
+        .form-control:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246,.25);
         }
         
-        .settings-group { 
-            margin-top: 1.5rem; 
-            padding: 1.5rem; 
-            background: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: var(--border-radius-lg);
+        .youtube-logo {
+            height: 1.5rem; /* Adjust size as needed */
+            width: auto;
         }
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .settings-group h3 { 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: var(--font-color); 
-            margin-bottom: 1.5rem; 
-            padding-bottom: 0.5rem; 
-            border-bottom: 1px solid var(--border-color); 
+
+        .settings-group {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 1rem;
         }
-        .toggle-group { 
-            grid-column: 1 / -1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            background: var(--input-bg); 
-            padding: 1rem; 
-            border-radius: var(--border-radius-md);
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
         }
-        .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { width: 44px; height: 24px; background-color: #ccc; border-radius: 34px; transition: var(--transition-duration); }
-        .toggle-slider::before { 
-            content: ''; 
-            position: absolute; 
-            height: 20px; 
-            width: 20px; 
-            left: 2px; 
-            top: 2px; 
-            background-color: white; 
-            border-radius: 50%; 
-            transition: var(--transition-duration); 
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
         }
-        .toggle-switch input:checked + .toggle-slider { background-color: var(--primary-accent); }
-        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
-        .font-selector { grid-column: 1 / -1; }
-        .font-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 0.5rem; }
-        .font-option input { position: absolute; opacity: 0; }
-        .font-option div { 
-            padding: 0.5rem; 
-            background: var(--input-bg); 
-            border-radius: var(--border-radius-md); 
-            text-align: center; 
-            cursor: pointer; 
-            border: 2px solid var(--border-color); 
-            transition: all var(--transition-duration); 
+        input:checked + .toggle-slider { background-color: var(--bs-primary); }
+        input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+        .font-option img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.25rem;
+            background-color: #f0f0f0;
         }
-        .font-option input:checked + div { 
-            border-color: var(--primary-accent); 
-            box-shadow: 0 0 10px var(--glow-color); 
-            transform: scale(1.05); 
+
+        .font-option input[type="radio"] { opacity: 0; position: absolute; }
+        .font-option input[type="radio"] + div {
+            border: 2px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .font-option img { width: 100%; height: auto; border-radius: var(--border-radius-sm); background-color: #f0f0f0; }
-        
-        .recommended-font { position: relative; overflow: visible; }
-        .recommended-font .hot-badge {
+        .font-option input[type="radio"]:checked + div {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246,.25);
+            transform: scale(1.05);
+        }
+
+        .recommended-font { position: relative; }
+        .recommended-font .badge {
             position: absolute;
             top: -8px;
             right: -8px;
-            background: var(--danger-color);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            z-index: 2;
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* ==================================== */
-        /* === RÉSULTATS === */
-        /* ==================================== */
-        #results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
-        .clip-card { background: var(--bg-color); border-radius: var(--border-radius-xl); border: 1px solid var(--border-color); overflow: hidden; transition: all var(--transition-duration) var(--transition-ease); }
-        .clip-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: var(--primary-accent); }
-        .clip-card video { width: 100%; height: auto; display: block; aspect-ratio: 9/16; object-fit: cover; background: #000; }
-        .clip-info { padding: 1.25rem; }
-        .clip-info h3 { font-size: 1.1rem; color: var(--font-color); margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .clip-info p { font-size: 0.9rem; color: var(--font-light); margin-bottom: 1.25rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .clip-actions { display: flex; gap: 1.25rem; }
-        .clip-actions a { color: var(--primary-light); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all var(--transition-duration) var(--transition-ease); display: flex; align-items: center; gap: 0.5rem; }
-        .clip-actions a:hover { color: var(--primary-accent); }
-        
-        /* ==================================== */
-        /* === SECTION ABONNEMENT === */
-        /* ==================================== */
-        .membership-section { padding: 4rem 2rem; text-align: center; background-color: var(--card-bg); }
-        .pricing-container { 
-            display: flex; 
-            justify-content: center; 
-            align-items: stretch; 
-            flex-wrap: wrap; 
-            gap: 2rem; 
-            max-width: 1200px; 
-            margin: 2rem auto 0; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-
-        .pricing-card {
-            background: var(--bg-color);
-            box-shadow: var(--shadow-md);
-            border-radius: 16px;
-            flex: 1; 
-            min-width: 280px; 
-            max-width: 340px; 
-            transition: all var(--transition-duration) var(--transition-ease); 
-            display: flex; 
-            flex-direction: column;
-            border: 1px solid var(--border-color);
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-10px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .pricing-card.recommended {
-            transform: scale(1.05);
-            border: 2px solid var(--primary-accent);
-            box-shadow: 0 0 40px var(--glow-color);
+            z-index: 10;
         }
         
-        .pricing-card.recommended:hover {
-            transform: scale(1.05) translateY(-10px);
-        }
-
-        .recommended-badge { 
-            position: absolute; 
-            top: 0; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            background: var(--gradient-main); 
-            color: #fff; 
-            padding: 0.25rem 0.75rem; 
-            border-radius: 99px; 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-        }
-
-        .card-title {
-            font-weight: 700;
-            font-size: 17px;
-            line-height: 21px;
-            text-align: center;
-            color: var(--font-color);
-            margin-bottom: 15px;
-            margin-top: 15px;
-        }
-
-        .card-description {
-            max-width: 80%;
-            margin: auto;
-            font-weight: 600;
-            font-size: 11px;
-            line-height: 16px;
-            text-align: center;
-            color: var(--font-light);
-        }
-
-        .benefits {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .benefits > span {
-            font-size: 15px;
-            color: var(--font-color);
-            font-weight: 700;
-        }
-
-        .benefits ul {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .benefits ul li {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 10px;
-        }
-        
-        .benefits ul li svg {
-            fill: var(--font-color);
-        }
-        .benefits ul li svg path {
-             stroke: var(--bg-color);
-        }
-
-
-        .benefits ul li span {
-            font-weight: 600;
-            font-size: 12px;
-            color: var(--font-light);
-        }
-
-        .modal--footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px;
-            border-top: 1px solid var(--border-color);
-            margin-top: auto;
-        }
-
-        .price {
-            position: relative;
-            font-size: 32px;
-            color: var(--font-color);
-            font-weight: 900;
-            display: block;
-        }
-
-        .price sup {
-            font-size: 13px;
-        }
-
-        .price sub {
-            width: fit-content;
-            position: absolute;
-            font-size: 11px;
-            color: var(--font-light);
-            bottom: 5px;
-            display: inline-block;
-        }
-
-        .upgrade-btn {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            width: auto;
-            padding: 10px 20px;
-            height: 40px;
-            background: var(--primary-accent);
-            box-shadow: 0px 0.5px 0.5px #EFEFEF, 0px 1px 0.5px rgba(239, 239, 239, 0.5);
-            border-radius: 7px;
-            border: 0;
-            outline: none;
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
-            text-decoration: none;
-        }
-
-        .upgrade-btn:hover {
-            background-color: var(--primary-light);
-            transform: scale(1.05);
-        }
-        
-        /* Bouton de génération de clips */
+        /* Enhanced button styles */
         .new-btn {
             border: none;
-            width: 15em;
-            height: 5em;
+            width: 15rem;
+            height: 3.5em; /* Adjusted height for a cleaner look */
             border-radius: 3em;
             display: flex;
             justify-content: center;
@@ -616,16 +260,20 @@
             background: #efedfb;
             cursor: pointer;
             transition: all 450ms ease-in-out;
-            margin: 1.5rem auto 0 auto; /* Ajusted margin */
+            margin: 1.5rem auto 0 auto;
+            box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), inset 0px -4px 0px 0px rgba(0, 0, 0, 0.2), 0px 0px 0px 4px rgba(255, 255, 255, 0.2), 0px 0px 180px 0px #9917FF;
+            transform: translateY(-2px);
         }
         .new-btn .sparkle {
-            fill: var(--font-color);
+            fill: var(--bs-body-color);
             transition: all 800ms ease;
+            transform: scale(1);
         }
         .new-btn .text {
             font-weight: 600;
-            color: var(--font-color);
+            color: var(--bs-body-color);
             font-size: medium;
+            transition: all 450ms ease-in-out;
         }
         .new-btn:hover {
             background: linear-gradient(0deg,#A47CF3,#683FEA);
@@ -635,386 +283,672 @@
         .new-btn:hover .text { color: white; }
         .new-btn:hover .sparkle { fill: white; transform: scale(1.2); }
         .new-btn:disabled {
-            background: var(--border-color);
+            background: var(--bs-border-color);
             cursor: not-allowed;
             opacity: 0.7;
             box-shadow: none;
             transform: none;
         }
-        .new-btn:disabled .text { color: var(--font-light); }
+        .new-btn:disabled .text { color: var(--bs-gray-600); }
+        
+        /* Custom badge styles added to match the Tailwind style */
+        .badge-soft {
+            font-size: 0.75em;
+            font-weight: 500;
+            padding: 0.25em 0.5em;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
 
-        /* ==================================== */
-        /* === APERÇU VIDÉO === */
-        /* ==================================== */
-        .example-previews-container { 
-            position: relative; 
-            perspective: 2000px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 2rem; 
-            max-width: 280px; 
-            margin-left: auto; 
-        }
-        .preview-border { 
-            padding: 8px; 
-            border-radius: 28px; 
-            background: var(--gradient-main); 
-            transition: transform var(--transition-duration) var(--transition-ease); 
-        }
-        .preview-1 { transform: rotateY(-15deg) rotateX(5deg) translateX(-10%); }
-        .preview-2 { transform: rotateY(10deg) rotateX(-2deg) translateX(10%); }
-        .example-previews-container:hover .preview-border { transform: rotateY(0) rotateX(0) translateX(0); }
-        .preview-video-wrapper { 
-            background: #000; 
-            border-radius: 20px; 
-            overflow: hidden; 
-            position: relative; 
-        }
-        .preview-video-wrapper video { 
-            width: 100%; 
-            height: 100%; 
-            aspect-ratio: 9/16; 
-            object-fit: cover; 
-        }
-        .preview-overlay { 
-            position: absolute; 
-            bottom: 20px; 
-            right: 20px; 
-            background: rgba(0, 0, 0, 0.5); 
-            color: #fff; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-size: 0.8rem; 
-            font-weight: 500; 
+        .badge-accent {
+            background-color: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
         }
         
-        /* ==================================== */
-        /* === RESPONSIVE DESIGN === */
-        /* ==================================== */
+        .new-btn .badge-within {
+            position: relative;
+            transform: scale(0.85);
+            transition: transform 450ms ease-in-out;
+            margin-right: 8px;
+        }
+
+        .new-btn:hover .badge-within {
+            transform: scale(0.95);
+        }
+        
+        .badge-outline {
+            background-color: transparent;
+            border: 2px solid;
+            font-weight: 600;
+            padding: 0.35em 0.8em;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .badge-success {
+            border-color: #44bd32;
+            color: #44bd32;
+        }
+        
+        .border-dashed {
+            border-style: dashed !important;
+        }
+
+        .example-previews-container {
+            position: relative;
+            perspective: 2000px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 250px;
+            margin-left: auto;
+        }
+
+        .preview-border {
+            padding: 6px;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .preview-video-wrapper {
+            background: #000;
+            border-radius: 14px;
+            position: relative;
+        }
+        
+        .single-preview-video {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .badge-video {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+
+        /* Custom dropdown styles */
+        .custom-dropdown {
+            position: relative;
+        }
+        .custom-dropdown .dropdown-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .custom-dropdown .dropdown-toggle:hover {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246,.25);
+        }
+        .custom-dropdown .dropdown-toggle::after {
+            display: inline-block;
+            margin-left: 0.5rem;
+            vertical-align: 0.255em;
+            content: "";
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+        }
+        .custom-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1050;
+            display: none;
+            float: left;
+            min-width: 100%;
+            padding: 0.5rem 0;
+            margin: 0.125rem 0 0;
+            font-size: 1rem;
+            color: var(--bs-body-color);
+            text-align: left;
+            list-style: none;
+            background-color: var(--bs-card-bg);
+            background-clip: padding-box;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            box-shadow: var(--bs-shadow-lg);
+        }
+        .custom-dropdown-menu.show {
+            display: block;
+        }
+        .custom-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 0.25rem 1rem;
+            clear: both;
+            font-weight: 400;
+            color: var(--bs-body-color);
+            text-align: inherit;
+            white-space: nowrap;
+            background-color: transparent;
+            border: 0;
+            cursor: pointer;
+        }
+        .custom-dropdown-item:hover, .custom-dropdown-item.active {
+            color: var(--bs-primary);
+            background-color: #f3f4f6;
+        }
+        
+        /* New styles for the feature boxes */
+        .feature-box {
+            background-color: var(--bs-card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--bs-shadow-md);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--bs-shadow-lg);
+        }
+        
+        .feature-box .icon {
+            font-size: 3rem;
+            color: var(--bs-primary);
+            margin-bottom: 1rem;
+        }
+        
+        /* Custom badge style for the heading */
+        .badge-why-choose {
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            color: #155724; /* A dark green color */
+            background-color: #d4edda; /* A light green color */
+        }
+
+        /* Styles for the new buttons */
+        .btn-ai-caption {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            border-radius: 9999px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--bs-shadow-md);
+            border: 1px solid #cbd5e0;
+            white-space: nowrap; /* Prevents button text from wrapping */
+        }
+
+        .btn-ai-caption:hover {
+            background-color: #cbd5e0;
+            transform: translateY(-2px);
+            box-shadow: var(--bs-shadow-lg);
+        }
+
+        .btn-ai-caption img {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .btn-ai-caption span {
+            font-size: 0.875rem;
+        }
+        
+        .flex-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .flex-buttons {
+                justify-content: start;
+            }
+        }
+
         @media (max-width: 960px) {
-            .main-layout-grid { grid-template-columns: 1fr; }
+            .main-container .row { flex-direction: column; }
             .example-previews-container { margin: 3rem auto 0 auto; }
         }
-        @media (max-width: 768px) {
-            .container { padding: 1.5rem; margin: 1rem auto; }
-            h1 { font-size: 2rem; }
-            .settings-grid { grid-template-columns: 1fr; }
-            
-            .nav-links {
-                position: fixed;
-                top: 73px; 
-                left: 100%; 
+
+        /* Specific mobile-first adjustments to enhance the design */
+        @media (max-width: 767.98px) {
+            /* General padding and spacing */
+            .main-container {
+                padding-left: var(--form-gap-sm);
+                padding-right: var(--form-gap-sm);
+            }
+            .card.p-4 {
+                padding: 1.5rem !important;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            .card-body {
+                padding: 0;
+            }
+
+            /* Input group and input enhancements */
+            .input-group-lg {
                 width: 100%;
-                height: calc(100% - 73px);
-                flex-direction: column; 
-                background: var(--bg-color);
-                padding: 1rem 0; 
-                gap: 0; 
-                transition: left 0.4s ease-in-out; 
-                z-index: 90;
-            }
-            .nav-links.active { 
-                left: 0; 
-            }
-            .nav-actions {
-                display: none;
-            }
-            .nav-actions.active {
                 display: flex;
-                flex-direction: column;
+            }
+            .input-group-lg .form-control {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+                border-radius: 0 2.5rem 2.5rem 0;
+            }
+            .input-group-text {
+                display: flex !important; /* Force logo to be visible on mobile */
+                align-items: center;
+                border-radius: 2.5rem 0 0 2.5rem;
+                padding: 0.6rem 0.75rem;
+                height: 100%;
+            }
+            .input-group-text .youtube-logo {
+                height: 1.25rem;
+                width: 1.25rem;
+            }
+            .input-group-lg .form-control::placeholder {
+                font-size: 0.85rem;
+            }
+            .form-control:focus, .form-select:focus {
+                border-color: var(--bs-primary);
+                box-shadow: 0 0 0 3px rgba(139, 92, 246,.25);
+            }
+            .input-group-lg .form-control, .input-group-text {
+                border-color: #e2e8f0;
+            }
+            
+            /* Custom dropdown enhancements for mobile */
+            .custom-dropdown-toggle {
+                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+            }
+            .custom-dropdown-menu {
+                font-size: 0.9rem;
+            }
+
+            /* Settings group layout */
+            .settings-group {
                 padding: 1rem;
-                width: 100%;
-                justify-content: center;
-                border-top: 1px solid var(--border-color);
+                margin-top: 1.5rem;
             }
-            .hamburger { 
-                display: block; 
+            .settings-group .row.g-3 {
+                --bs-gutter-x: 0.5rem;
+                --bs-gutter-y: 0.5rem;
             }
-            .btn-login, .btn-signup {
-                width: 100%;
-                justify-content: center;
+            .settings-group h3 {
+                font-size: 1.2rem;
+            }
+            .settings-group .form-label, .settings-group span {
+                font-size: 0.95rem;
+            }
+            .form-select {
+                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+            }
+
+
+            /* Font options grid */
+            .font-options .col-6 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+            .font-option img {
+                width: 80px;
+                height: 80px;
+                object-fit: contain;
+                transition: transform 0.3s ease;
+            }
+            .font-option input[type="radio"]:checked + div {
+                border-width: 3px;
+                box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.4);
+            }
+            .recommended-font .badge {
+                transform: scale(0.9);
+                top: -5px;
+                right: -5px;
+            }
+            
+            /* Buttons */
+            .btn-ai-caption {
+                padding: 0.5rem 0.9rem;
+                font-size: 0.8rem;
+                gap: 0.4rem;
+                transition: transform 0.2s ease-in-out;
+            }
+            .btn-ai-caption img {
+                width: 1.1rem;
+                height: 1.1rem;
+            }
+            .btn-ai-caption:active {
+                transform: translateY(1px) scale(0.98);
+            }
+            .new-btn {
+                width: 14rem;
+                height: 3em;
+                margin-top: 1rem auto;
+            }
+            .new-btn .text {
+                font-size: small;
+            }
+            .new-btn .badge-within {
+                transform: scale(0.8);
+            }
+            .header-title-container {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+            h1.card-title {
+                font-size: 2rem !important;
             }
         }
     </style>
 </head>
 <body>
     <header>
-        <nav class="nav-container">
-            <a href="{{ url_for('index') }}" class="logo">
-                <img src="{{ url_for('static', filename='images/footer-logo.png') }}" alt="Velva.clip Logo">
-            </a>
-            <div class="nav-links">
-                <a href="#memberships">Abonnements</a>
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                {% endif %}
-                 <div class="nav-actions">
-                    {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('logout') }}" class="btn btn-login"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-                    {% else %}
-                        <a href="{{ url_for('login') }}" class="btn btn-login"><i class="fas fa-sign-in-alt"></i> Log In</a>
-                        <a href="{{ url_for('signup') }}" class="btn btn-signup"><i class="fas fa-user-plus"></i> Sign Up</a>
-                    {% endif %}
-                </div>
-            </div>
-            <button class="hamburger" aria-label="Toggle navigation menu">
-                <div class="line"></div>
-                <div class="line"></div>
-                <div class="line"></div>
-            </button>
-        </nav>
-    </header>
-
-    <div class="main-layout-grid">
-        <div class="container animate-on-load">
-            <h1>Turn Your Long Video to Short Viral</h1>
-            <form id="clipper-form">
-                <div class="input-wrapper mb-6">
-                    <i class="fas fa-link"></i>
-                    <input type="text" id="youtube_url" name="youtube_url" placeholder="Collez l'URL de votre vidéo YouTube ici..." required>
-                </div>
-                
-                <div id="video-preview-container" class="video-preview-container" style="display: none;">
-                    <a id="video-link" href="#" target="_blank" class="video-link-wrapper">
-                        <img id="video-thumbnail" src="" alt="Aperçu vidéo YouTube" class="video-thumbnail">
-                        <div class="play-button"><i class="fas fa-play"></i></div>
-                    </a>
-                </div>
-                
-                <div class="settings-group">
-                <h3>Clip Settings</h3>
-                    <div class="settings-grid">
-                        <div>
-                            <label for="clip_length" class="flex justify-between font-semibold mb-2"><span>Clip Duration</span></label>
-                            <select id="clip_length" name="clip_length">
-                                {% for duration in range(15, 181, 15) %}
-                                    <option value="{{ duration }}" {% if duration == 60 %}selected{% endif %}>{{ duration }}s</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label for="num_clips" class="flex justify-between font-semibold mb-2"><span>Number of Clips</span></label>
-                            <select id="num_clips" name="num_clips">
-                                {% for num in range(1, 11) %}
-                                    <option value="{{ num }}" {% if num == 5 %}selected{% endif %}>{{ num }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="toggle-group">
-                             <span class="font-semibold">AI Animated Captions ✨</span>
-                             <label class="toggle-switch">
-                                 <input type="checkbox" id="add_captions" name="add_captions" checked>
-                                 <span class="toggle-slider"></span>
-                             </label>
-                        </div>
-                        
-                        <div class="font-selector">
-                            <span class="font-semibold mb-2 block">Font & Caption Style</span>
-                            <div class="font-options">
-                                <label class="font-option">
-                                     <input type="radio" name="font_choice" value="Gabarito" checked>
-                                     <div><img src="{{ url_for('static', filename='images/mm.jpg') }}" alt="Style de police Gabarito"></div>
-                                </label>
-                                <label class="font-option">
-                                     <input type="radio" name="font_choice" value="Anton">
-                                     <div><img src="{{ url_for('static', filename='images/anton.jpg') }}" alt="Style de police Anton"></div>
-                                </label>
-                                <label class="font-option recommended-font">
-                                     <div class="hot-badge">New</div>
-                                     <input type="radio" name="font_choice" value="Montserrat">
-                                     <div><img src="{{ url_for('static', filename='images/Montserrat.jpg') }}" alt="Style de sous-titres Opus Green/White"></div>
-                                </label>
-                                <label class="font-option">
-                                     <input type="radio" name="font_choice" value="Montserrat-Blue">
-                                     <div><img src="{{ url_for('static', filename='images/22.jpg') }}" alt="Style de sous-titres Opus Blue/White"></div>
-                                </label>
-                            </div>
-                        </div>
+        <nav class="navbar navbar-expand-lg navbar-light py-3">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/footer-logo.png') }}" alt="Velva.clip Logo" height="40">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-muted" href="#memberships">Abonnements</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-muted" href="{{ url_for('dashboard') }}">Dashboard</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex ms-auto">
+                        {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary rounded-pill me-2"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+                        {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary rounded-pill me-2"><i class="fas fa-sign-in-alt"></i> Log In</a>
+                        <a href="{{ url_for('signup') }}" class="btn btn-primary rounded-pill"><i class="fas fa-user-plus"></i> Sign Up</a>
+                        {% endif %}
                     </div>
                 </div>
-                <button type="submit" id="submit-button" class="new-btn">
-                    <svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
-                        <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
-                    </svg>
-                    <span class="text">Generate</span>
-                </button>
-            </form>
+            </div>
+        </nav>
+        <div class="header-title-container">
+            <h1 class="card-title text-center animated-gradient-text" style="font-size: 2.5rem; font-weight: 700;">Turn Your Long Video to Short Viral</h1>
+            <div class="text-center mt-3">
+                <span class="badge badge-outline border-dashed badge-accent">Generative AI</span>
+            </div>
+        </div>
+    </header>
 
-            <div id="results-section" style="display: none;">
-                <h2>Vos Clips sont Prêts !</h2>
-                <div id="results-grid"></div>
+    <div class="main-container row align-items-start justify-content-center py-5">
+        <div class="col-12 col-lg-6 mb-5 mb-lg-0">
+            <div class="card p-4 shadow-lg animate-on-load">
+                <div class="card-body">
+                    <form id="clipper-form">
+                        <div class="mb-3">
+                            <span class="badge badge-outline badge-success">Get AI Clips</span>
+                        </div>
+                        <div id="video-url-input-group" class="input-group input-group-lg mb-4">
+                            <span class="input-group-text bg-white border-end-0">
+                                <img src="{{ url_for('static', filename='images/youtube.webp') }}" alt="YouTube Logo" class="youtube-logo">
+                            </span>
+                            <input type="text" id="youtube_url" name="youtube_url" class="form-control border-start-0" placeholder="Collez l'URL YouTube ici..." required>
+                        </div>
+                        
+                        <div id="video-preview-container" class="video-preview-container" style="display: none;">
+                            <a id="video-link" href="#" target="_blank" class="video-link-wrapper">
+                                <img id="video-thumbnail" src="" alt="Aperçu vidéo YouTube" class="video-thumbnail">
+                                <div class="play-button"><i class="fas fa-play"></i></div>
+                                <span id="resolution-badge" class="badge bg-secondary position-absolute top-0 end-0 m-2" style="display: none;"></span>
+                            </a>
+                        </div>
+                        
+                        <div id="settings-section" class="settings-group" style="display: none;">
+                            <h3 class="fw-bold mb-4">Clip Settings</h3>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="clip_length" class="form-label fw-bold">Clip Duration</label>
+                                    <div class="custom-dropdown" id="clip_length_dropdown">
+                                        <div class="dropdown-toggle" id="clip_length_toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            60s
+                                        </div>
+                                        <ul class="custom-dropdown-menu" aria-labelledby="clip_length_toggle">
+                                            {% for duration in range(15, 181, 15) %}
+                                            <li><span class="custom-dropdown-item" data-value="{{ duration }}">{{ duration }}s</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    <input type="hidden" id="clip_length_input" name="clip_length" value="60">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="num_clips" class="form-label fw-bold">Number of Clips</label>
+                                    <div class="custom-dropdown" id="num_clips_dropdown">
+                                        <div class="dropdown-toggle" id="num_clips_toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            5
+                                        </div>
+                                        <ul class="custom-dropdown-menu" aria-labelledby="num_clips_toggle">
+                                            {% for num in range(1, 11) %}
+                                            <li><span class="custom-dropdown-item" data-value="{{ num }}">{{ num }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    <input type="hidden" id="num_clips_input" name="num_clips" value="5">
+                                </div>
+                                
+                                <div class="col-12 d-flex align-items-center justify-content-between p-3 rounded-3 bg-white border border-secondary">
+                                    <span class="fw-bold">AI Animated Captions ✨</span>
+                                    <div class="form-check form-switch m-0">
+                                        <input class="form-check-input" type="checkbox" id="add_captions" name="add_captions" checked>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <span class="fw-bold d-block mb-2">Font & Caption Style</span>
+                                    <div class="row g-2 font-options">
+                                        <div class="col-6 col-md-3">
+                                            <label class="d-block text-center font-option">
+                                                <input type="radio" name="font_choice" value="Gabarito" class="d-none" checked>
+                                                <div class="p-2 border rounded-3"><img src="{{ url_for('static', filename='images/mm.jpg') }}" alt="Gabarito Font Style" class="img-fluid"></div>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <label class="d-block text-center font-option">
+                                                <input type="radio" name="font_choice" value="Anton" class="d-none">
+                                                <div class="p-2 border rounded-3"><img src="{{ url_for('static', filename='images/anton.jpg') }}" alt="Anton Font Style" class="img-fluid"></div>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <label class="d-block text-center font-option recommended-font">
+                                                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">New</span>
+                                                <input type="radio" name="font_choice" value="Montserrat">
+                                                <div class="p-2 border rounded-3"><img src="{{ url_for('static', filename='images/Montserrat.jpg') }}" alt="Opus Green/White Style" class="img-fluid"></div>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <label class="d-block text-center font-option">
+                                                <input type="radio" name="font_choice" value="Montserrat-Blue" class="d-none">
+                                                <div class="p-2 border rounded-3"><img src="{{ url_for('static', filename='images/22.jpg') }}" alt="Opus Blue/White Style" class="img-fluid"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" id="submit-button" class="new-btn">
+                            <span class="badge badge-soft badge-accent badge-within">AI</span>
+                            <svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
+                                <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
+                            </svg>
+                            <span class="text">Generate</span>
+                        </button>
+                    </form>
+                    <div id="results-section" style="display: none;">
+                        <h2 class="mt-4">Vos Clips sont Prêts !</h2>
+                        <div id="results-grid" class="row g-4"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="example-previews-container animate-on-load" style="animation-delay: 0.2s;">
-            <div class="preview-border preview-1">
+        <div class="col-12 col-lg-5 mb-5 mb-lg-0">
+            <div class="preview-border px-3 py-4">
                 <div class="preview-video-wrapper">
-                    <video src="{{ url_for('static', filename='videos/11.mp4') }}" autoplay loop muted playsinline></video>
-                    <div class="preview-overlay"><i class="fas fa-clock" style="margin-right: 4px;"></i> 0:42</div>
-                </div>
-            </div>
-            <div class="preview-border preview-2">
-                <div class="preview-video-wrapper">
-                    <video src="{{ url_for('static', filename='videos/final_clip_1.mp4') }}" autoplay loop muted playsinline></video>
-                    <div class="preview-overlay"><i class="fas fa-clock" style="margin-right: 4px;"></i> 0:55</div>
+                    <span class="badge bg-info badge-video">Exemple</span>
+                    <video class="single-preview-video" src="{{ url_for('static', filename='videos/op.mp4') }}" autoplay loop muted playsinline></video>
                 </div>
             </div>
         </div>
     </div>
+    
+    <section class="container py-5">
+        <h2 class="text-center fw-bold mb-5">Why Choose <span class="badge badge-success">AIClips</span></h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-box">
+                    <i class="fas fa-magic icon"></i>
+                    <h5 class="fw-bold mt-3">AI-Powered Magic</h5>
+                    <p class="text-muted">Our AI automatically finds the most engaging parts of your video and turns them into viral clips.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-box">
+                    <i class="fas fa-rocket icon"></i>
+                    <h5 class="fw-bold mt-3">Boost Your Growth</h5>
+                    <p class="text-muted">Effortlessly create content for TikTok, Instagram Reels, and YouTube Shorts to grow your audience.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-box">
+                    <i class="fas fa-bolt icon"></i>
+                    <h5 class="fw-bold mt-3">Lightning Fast</h5>
+                    <p class="text-muted">Generate professional, high-quality clips in minutes, not hours. Save time and create more!</p>
+                </div>
+            </div>
+            <div class="col-12 mt-5 d-flex flex-wrap justify-content-center justify-content-md-start gap-3">
+                <a href="#" class="btn-ai-caption">
+                    <img src="{{ url_for('static', filename='images/cpimg.png') }}" alt="AI Caption Icon">
+                    <span>AI Caption</span>
+                </a>
+                <a href="#" class="btn-ai-caption">
+                    <img src="{{ url_for('static', filename='images/cpt.png') }}" alt="AI Transcription Icon">
+                    <span>AI Transcription</span>
+                </a>
+                <a href="#" class="btn-ai-caption">
+                    <img src="{{ url_for('static', filename='images/ait.png') }}" alt="AI Reframe Icon">
+                    <span>AI Reframe</span>
+                </a>
+                <a href="#" class="btn-ai-caption">
+                    <img src="{{ url_for('static', filename='images/dtt.png') }}" alt="AI Detect Icon">
+                    <span>AI Detect</span>
+                </a>
+            </div>
+        </div>
+    </section>
 
-    <section id="memberships" class="membership-section">
-        <h2 class="animate-on-load">Become a Pro Member</h2>
-        <div class="pricing-container">
-            <div class="pricing-card animate-on-load" style="animation-delay: 0.2s;">
-                <label class="card-title">Free</label>
-                <div class="benefits">
-                    <ul>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>10 Clips / jour</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Qualité 720p</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Avec Filigrane</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal--footer">
-                    <label class="price"><sup>€</sup>0<sub>/mois</sub></label>
-                    <a href="#" class="upgrade-btn">Get Started</a>
+    <section id="memberships" class="bg-light py-5">
+        <h2 class="text-center mb-5 fw-bold animate-on-load">Become a Pro Member</h2>
+        <div class="container pricing-container row g-4 justify-content-center animate-on-load">
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border">
+                    <div class="card-body d-flex flex-column text-center">
+                        <h3 class="card-title fw-bold">Free</h3>
+                        <div class="my-4">
+                            <h2 class="fw-bold">€0<sub>/mois</sub></h2>
+                        </div>
+                        <ul class="list-unstyled text-start mx-auto" style="max-width: 200px;">
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>10 Clips / jour</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Qualité 720p</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-times-circle me-2 text-danger"></i> <span>Sans Filigrane</span></li>
+                        </ul>
+                        <a href="#" class="btn btn-primary mt-auto rounded-pill fw-bold">Get Started</a>
+                    </div>
                 </div>
             </div>
             
-            <div class="pricing-card recommended animate-on-load" style="animation-delay: 0.4s;">
-                <div class="recommended-badge">Most Popular</div>
-                <label class="card-title">Pro</label>
-                <div class="benefits">
-                    <ul>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>100 Clips / jour</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Qualité 1080p & 4K</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Sans Filigrane</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Support Prioritaire</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal--footer">
-                    <label class="price"><sup>€</sup>19<sub>/mois</sub></label>
-                    <a href="https://aiclips.gumroad.com/l/jxjgx" class="upgrade-btn">Upgrade Now</a>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-lg border border-primary position-relative">
+                    <div class="position-absolute top-0 start-50 translate-middle badge bg-primary text-white p-2 rounded-pill">Most Popular</div>
+                    <div class="card-body d-flex flex-column text-center">
+                        <h3 class="card-title fw-bold">Pro</h3>
+                        <div class="my-4">
+                            <h2 class="fw-bold">€19<sub>/mois</sub></h2>
+                        </div>
+                        <ul class="list-unstyled text-start mx-auto" style="max-width: 200px;">
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>100 Clips / jour</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Qualité 1080p & 4K</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Sans Filigrane</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Support Prioritaire</span></li>
+                        </ul>
+                        <a href="https://aiclips.gumroad.com/l/jxjgx" class="btn btn-primary mt-auto rounded-pill fw-bold">Upgrade Now</a>
+                    </div>
                 </div>
             </div>
             
-            <div class="pricing-card animate-on-load" style="animation-delay: 0.6s;">
-                <label class="card-title">Business</label>
-                <div class="benefits">
-                    <ul>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Clips Illimités</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Qualité 8K</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Sans Filigrane</span>
-                        </li>
-                        <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" height="16" width="16">
-                                <rect fill="#000" rx="8" height="16" width="16"></rect>
-                                <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#fff" d="M5 8.5L7.5 10.5L11 6"></path>
-                            </svg>
-                            <span>Support Dédié</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal--footer">
-                    <label class="price"><sup>€</sup>49<sub>/mois</sub></label>
-                    <a href="#" class="upgrade-btn">Upgrade Now</a>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border">
+                    <div class="card-body d-flex flex-column text-center">
+                        <h3 class="card-title fw-bold">Business</h3>
+                        <div class="my-4">
+                            <h2 class="fw-bold">€49<sub>/mois</sub></h2>
+                        </div>
+                        <ul class="list-unstyled text-start mx-auto" style="max-width: 200px;">
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Clips Illimités</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Qualité 8K</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Sans Filigrane</span></li>
+                            <li class="d-flex align-items-center mb-2"><i class="fas fa-check-circle me-2 text-primary"></i> <span>Support Dédié</span></li>
+                        </ul>
+                        <a href="#" class="btn btn-primary mt-auto rounded-pill fw-bold">Upgrade Now</a>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
-        const hamburger = document.querySelector('.hamburger');
-        const navLinks = document.querySelector('.nav-links');
-        const navActions = document.querySelector('.nav-links .nav-actions'); // Corrected selector
         const clipperForm = document.getElementById('clipper-form');
         const submitButton = document.getElementById('submit-button');
-
         const youtubeUrlInput = document.getElementById('youtube_url');
         const videoPreviewContainer = document.getElementById('video-preview-container');
+        const resolutionBadge = document.getElementById('resolution-badge');
+        const settingsSection = document.getElementById('settings-section');
         const videoThumbnail = document.getElementById('video-thumbnail');
         const videoLink = document.getElementById('video-link');
 
-        // Gère la navigation mobile
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            navLinks.classList.toggle('active');
-            // No need to toggle navActions separately if it's inside nav-links
-        });
-        
-        // Ferme le menu si un lien est cliqué
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (navLinks.classList.contains('active')) {
-                    hamburger.classList.remove('active');
-                    navLinks.classList.remove('active');
-                }
-            });
-        });
-
         function resetSubmitButton() {
             submitButton.disabled = false;
-            // Mise à jour de la fonction pour correspondre au nouveau HTML du bouton
-            submitButton.innerHTML = `<svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle"><path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path></svg><span class="text">Generate</span>`;
+            submitButton.innerHTML = `<span class="badge badge-soft badge-accent badge-within">AI</span><svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
+                                <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
+                            </svg><span class="text">Generate</span>`;
         }
 
         function extractVideoId(url) {
@@ -1022,22 +956,85 @@
             return url.match(regex) ? url.match(regex)[1] : null;
         }
 
-        youtubeUrlInput.addEventListener('input', () => {
+        youtubeUrlInput.addEventListener('input', async () => {
             const url = youtubeUrlInput.value;
             const videoId = extractVideoId(url);
-            
+
             if (videoId) {
                 videoPreviewContainer.style.display = 'block';
+                settingsSection.style.display = 'block';
                 const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
                 const youtubeWatchUrl = `https://www.youtube.com/watch?v=${videoId}`;
                 videoThumbnail.src = thumbnailUrl;
                 videoLink.href = youtubeWatchUrl;
+                
+                try {
+                    const response = await fetch(`/get_video_info?url=${encodeURIComponent(url)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        resolutionBadge.textContent = data.resolution;
+                        resolutionBadge.style.display = 'block';
+                    } else {
+                        console.error('Failed to get video info');
+                        resolutionBadge.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    resolutionBadge.style.display = 'none';
+                }
             } else {
                 videoPreviewContainer.style.display = 'none';
+                settingsSection.style.display = 'none';
                 videoThumbnail.src = '';
                 videoLink.href = '#';
+                resolutionBadge.style.display = 'none';
             }
         });
+
+        // Dropdown functionality
+        function setupCustomDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+            const menu = dropdown.querySelector('.custom-dropdown-menu');
+            const input = document.getElementById(dropdownId.replace('_dropdown', '_input'));
+
+            // Set initial selected value
+            const initialValue = input.value;
+            const initialItem = menu.querySelector(`[data-value="${initialValue}"]`);
+            if (initialItem) {
+                toggle.textContent = initialItem.textContent;
+                initialItem.classList.add('active');
+            }
+
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                menu.classList.toggle('show');
+            });
+
+            menu.addEventListener('click', (e) => {
+                const clickedItem = e.target.closest('.custom-dropdown-item');
+                if (clickedItem) {
+                    e.preventDefault();
+                    // Update active state and toggle text
+                    menu.querySelectorAll('.custom-dropdown-item').forEach(item => item.classList.remove('active'));
+                    clickedItem.classList.add('active');
+                    toggle.textContent = clickedItem.textContent;
+                    // Update hidden input field value
+                    input.value = clickedItem.dataset.value;
+                    menu.classList.remove('show');
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target)) {
+                    menu.classList.remove('show');
+                }
+            });
+        }
+        
+        setupCustomDropdown('clip_length_dropdown');
+        setupCustomDropdown('num_clips_dropdown');
 
         clipperForm.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -1087,6 +1084,23 @@
                 resetSubmitButton();
             }
         });
+
+        // Animation for the animated title
+        const titleElement = document.querySelector('.animated-gradient-text');
+        if (titleElement) {
+            const words = titleElement.textContent.split(' ');
+            titleElement.innerHTML = '';
+            for (let i = 0; i < words.length; i += 2) {
+                const twoWords = words.slice(i, i + 2).join(' ');
+                const span = document.createElement('span');
+                span.textContent = twoWords;
+                span.classList.add('word');
+                titleElement.appendChild(span);
+                if (i + 2 < words.length) {
+                    titleElement.appendChild(document.createTextNode(' '));
+                }
+            }
+        }
     </script>
 </body>
 </html>

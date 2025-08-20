@@ -14,6 +14,7 @@ import shutil
 import json
 import traceback
 from datetime import date, datetime, timedelta
+from yt_dlp import YoutubeDL
 
 # Import your business logic class
 from main_logic import YouTubeClipperCore
@@ -22,18 +23,17 @@ app = Flask(__name__)
 
 # --- Configuration for Database and Login ---
 app.config['SECRET_KEY'] = 'a-super-secret-key-that-you-should-change'
-# For Render, this should be set via an environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- Folder Configuration ---
-DOWNLOAD_FOLDER = Path("downloaded_clips")
-TEMP_FOLDER = Path("temp_assets")
+DOWNLOAD_FOLDER = Path("clips")
+TEMP_FOLDER = Path("temp")
 LOGS_FOLDER = Path("logs")
 
 for folder in [DOWNLOAD_FOLDER, TEMP_FOLDER, LOGS_FOLDER]:
     folder.mkdir(exist_ok=True)
-
+os.environ["PATH"] += os.pathsep + r"C:\\ffmpeg\\bin"
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
 app.config['TEMP_FOLDER'] = TEMP_FOLDER
 app.config['LOGS_FOLDER'] = LOGS_FOLDER
@@ -85,6 +85,7 @@ class Clip(db.Model):
     filename = db.Column(db.String(300), nullable=False)
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text, nullable=False)
+    duration = db.Column(db.Float, default=0.0)
     process_id = db.Column(db.Integer, db.ForeignKey('video_process.id'), nullable=False)
 
 # --- Flask-Login User Loader ---
@@ -108,7 +109,7 @@ def admin_required(f):
 # --- Page Routes ---
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', current_user=current_user)
 
 @app.route('/health')
 def health_check():
@@ -207,6 +208,27 @@ def dashboard():
         has_notifications=has_notifications
     )
 
+@app.route('/get_video_info')
+def get_video_info():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({"error": "URL parameter is missing."}), 400
+
+    try:
+        ydl_opts = {
+            'format': 'bestvideo',
+            'quiet': True,
+            'skip_download': True,
+        }
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            height = info['height']
+            resolution = f"{height}p"
+            return jsonify({"resolution": resolution})
+    except Exception as e:
+        app.logger.error(f"Failed to get video info for {url}: {e}")
+        return jsonify({"error": "Failed to retrieve video information."}), 500
+
 # --- Video Processing Route ---
 @app.route('/process_video', methods=['POST'])
 @login_required
@@ -215,9 +237,9 @@ def process_video_request():
         # --- Tier-based Feature Gating ---
         FREE_TIER_CLIP_LIMIT = 10
         FREE_TIER_MAX_DURATION = 90
-        FREE_TIER_RESOLUTION = (720, 1280)
-        PRO_TIER_RESOLUTION = (1080, 1920)
-        BUSINESS_TIER_RESOLUTION = (1080, 2048)
+        FREE_TIER_RESOLUTION = (720, 1280)  # 720p Vertical
+        PRO_TIER_RESOLUTION = (1080, 1920) # 1080p Full HD Vertical
+        BUSINESS_TIER_RESOLUTION = (1440, 2560) # 2K QHD Vertical
 
         if current_user.tier == 'free':
             if current_user.last_clip_date != date.today():
@@ -312,6 +334,9 @@ def process_video_request():
 # --- Clipping Pipeline Runner ---
 def run_clipping_pipeline(flask_app, process_db_id, url, num_clips, clip_duration_arg, add_captions, font_choice, caption_style, session_download_folder, session_temp_folder, log_file_path, target_resolution):
     with flask_app.app_context():
+        # Use the existing Flask-SQLAlchemy session
+        session = db.session
+
         def log_to_file(message_type, value):
             with open(log_file_path, 'a', encoding='utf-8') as f:
                 if message_type == "log":
@@ -320,26 +345,39 @@ def run_clipping_pipeline(flask_app, process_db_id, url, num_clips, clip_duratio
                     f.write(f"PROGRESS:{value}\n")
 
         clipper_core = YouTubeClipperCore(log_to_file, target_resolution=target_resolution) 
-        process_entry = db.session.get(VideoProcess, process_db_id)
-
+        
         try:
             clipper_core._intelligent_clipping_pipeline(
                 url, num_clips, clip_duration_arg, add_captions, font_choice, caption_style,
                 session_download_folder, session_temp_folder
             )
             
+            process_entry = session.get(VideoProcess, process_db_id)
             if process_entry:
                 for clip_meta in clipper_core.final_clip_metadata:
+                    # Get clip duration
+                    clip_path = session_download_folder / clip_meta['filename']
+                    try:
+                        duration_str = subprocess.check_output([
+                            "ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
+                            "default=noprint_wrappers=1:nokey=1", str(clip_path)
+                        ]).decode('utf-8').strip()
+                        clip_duration = float(duration_str) if duration_str else 0.0
+                    except Exception as e:
+                        print(f"Error probing duration for {clip_meta['filename']}: {e}")
+                        clip_duration = 0.0
+                        
                     new_clip = Clip(
                         filename=clip_meta['filename'],
                         title=clip_meta['title'],
                         description=clip_meta['description'],
+                        duration=clip_duration,
                         process_id=process_entry.id
                     )
-                    db.session.add(new_clip)
+                    session.add(new_clip)
                 
                 process_entry.status = 'completed'
-                db.session.commit()
+                session.commit()
             
             final_metadata_path = session_download_folder / "metadata.json"
             with open(final_metadata_path, 'w', encoding='utf-8') as f:
@@ -348,11 +386,12 @@ def run_clipping_pipeline(flask_app, process_db_id, url, num_clips, clip_duratio
             log_to_file("log", "PROCESSING_COMPLETE: All clips generated and metadata saved to dashboard.")
         except Exception as e:
             log_to_file("log", f"PROCESSING_ERROR: {e}\n{traceback.format_exc()}")
+            process_entry = session.get(VideoProcess, process_db_id)
             if process_entry:
                 process_entry.status = 'error'
-                db.session.commit()
+            session.rollback()
         finally:
-            db.session.remove()
+            session.remove()
 
 # --- New: Delete Process Route ---
 @app.route('/delete_process/<session_id>', methods=['DELETE'])

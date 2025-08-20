@@ -6,16 +6,42 @@ import numpy as np
 import subprocess
 import random 
 import re 
-import os # <-- os is needed to access environment variables
+import os
+import json
+import openai # The openai library is used to interact with OpenRouter's compatible API
 
 class ContentAnalyzer:
     def __init__(self, message_queue):
         self.message_queue = message_queue
         self.emotion_pipeline = None
         self.diarization_pipeline = None
-        self.text_gen_pipeline = None
+        # MODIFIED: Renamed client to be more generic
+        self.api_client = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.message_queue.put(("log", f"🧠 AI Analyzer running on: {self.device.upper()}"))
+        
+        # MODIFIED: Initialize the client for OpenRouter using config.json
+        try:
+            with open('config.json', 'r') as f:
+                config = json.load(f)
+            
+            api_key = config.get("API_KEY")
+            
+            if not api_key or "your-new-secret" in api_key:
+                raise ValueError("API key not found or is still the default placeholder in config.json.")
+            
+            self.api_client = openai.OpenAI(
+                api_key=api_key,
+                base_url="https://openrouter.ai/api/v1" # MODIFIED: Using OpenRouter's URL
+            )
+            self.message_queue.put(("log", "     ✅ API client for OpenRouter initialized successfully."))
+        except FileNotFoundError:
+            self.api_client = None
+            self.message_queue.put(("log", "❌ CRITICAL ERROR: `config.json` file not found. Please create it."))
+        except Exception as e:
+            self.api_client = None
+            self.message_queue.put(("log", f"❌ API client failed to initialize: {e}"))
+
 
     def _initialize_pipelines(self):
         """Initializes the Hugging Face models on first use."""
@@ -32,10 +58,7 @@ class ContentAnalyzer:
         if self.diarization_pipeline is None:
             self.message_queue.put(("log", "     🧠 Initializing Speaker Diarization pipeline..."))
             try:
-                # Use the environment variable for the token
                 huggingface_token = os.environ.get("HUGGINGFACE_TOKEN")
-                
-                # Check if the token is available
                 if not huggingface_token:
                     raise ValueError("Hugging Face token not found in environment variables.")
 
@@ -49,19 +72,6 @@ class ContentAnalyzer:
                 self.message_queue.put(("log", f"     ❌ Speaker pipeline failed. Check Hugging Face token. Error: {e}"))
                 self.diarization_pipeline = "failed" 
         
-        if self.text_gen_pipeline is None:
-            self.message_queue.put(("log", "     🧠 Initializing Title/Description pipeline..."))
-            try:
-                self.text_gen_pipeline = pipeline(
-                    "text2text-generation",
-                    model="google/flan-t5-base",
-                    device=0 if self.device == "cuda" else -1
-                )
-                self.message_queue.put(("log", "     ✅ Title/Description pipeline ready."))
-            except Exception as e:
-                 self.message_queue.put(("log", f"     ❌ Title/Description pipeline failed: {e}"))
-                 self.text_gen_pipeline = "failed"
-
     def _analyze_speakers(self, audio_path):
         if self.diarization_pipeline == "failed": return []
         self.message_queue.put(("log", "     🗣️ Analyzing speakers (diarization)..."))
@@ -77,12 +87,9 @@ class ContentAnalyzer:
             return []
 
     def _score_transcript_for_emotion(self, timed_words):
-        """Scores sentences based on emotional content using the emotion pipeline."""
         self.message_queue.put(("log", "     🎭 Scoring transcript for emotional content..."))
         
         full_text = " ".join([word['text'] for word in timed_words])
-        
-        # Split text into sentences using a simple regex to handle multiple delimiters
         sentences = re.split(r'[.?!]\s*', full_text)
         
         sentence_data = []
@@ -92,20 +99,15 @@ class ContentAnalyzer:
             if not sentence.strip():
                 continue
             
-            # Use a simple split and re-join logic for sentence chunking
             sentence_words = sentence.split()
-            # Use a threshold to prevent tensors that are too large. Max length is usually 512 for roberta models.
-            # We'll use 200 as a safe buffer.
-            max_chunk_words = 200  
+            max_chunk_words = 200
             
             for i in range(0, len(sentence_words), max_chunk_words):
                 chunk_words = sentence_words[i:i + max_chunk_words]
                 chunk_text = " ".join(chunk_words)
                 num_words_in_chunk = len(chunk_words)
                 
-                # Find corresponding start and end times for the chunk
                 start_time = timed_words[word_idx]['start'] if word_idx < len(timed_words) else timed_words[-1]['end']
-                
                 end_word_idx = min(word_idx + num_words_in_chunk - 1, len(timed_words) - 1)
                 end_time = timed_words[end_word_idx]['end']
                 
@@ -118,7 +120,6 @@ class ContentAnalyzer:
         target_emotions = {'joy', 'surprise', 'anger', 'sadness'}
         texts = [s['text'] for s in sentence_data]
         
-        # Process in batches to handle large transcripts more efficiently
         batch_size = 8
         results = []
         for i in range(0, len(texts), batch_size):
@@ -128,11 +129,10 @@ class ContentAnalyzer:
                 results.extend(batch_results)
             except Exception as e:
                 self.message_queue.put(("log", f"     ❌ Error processing text batch: {e}"))
-                # Append dummy results if an error occurs to prevent crashing
                 results.extend([[] for _ in batch_texts])
                 
         for i, (scores, data) in enumerate(zip(results, sentence_data)):
-            if not scores: # Handle cases where the pipeline failed for a batch
+            if not scores:
                 emotional_score = 0
             else:
                 emotional_score = sum(emotion['score'] for emotion in scores if emotion['label'] in target_emotions)
@@ -142,29 +142,53 @@ class ContentAnalyzer:
         return sentence_data
 
     def generate_title_and_description(self, clip_words):
-        if self.text_gen_pipeline == "failed" or not clip_words:
-            return {"title": "AI Clip", "description": "#aiclip #short"}
+        if not self.api_client or not clip_words:
+            self.message_queue.put(("log", "     ⚠️ Skipping title generation: API client not available."))
+            return {"title": "AI Clip", "description": "A fascinating moment from the video. #aiclip #short"}
 
         transcript = " ".join([word['text'] for word in clip_words])
-        
-        # Generate Title
-        title_prompt = f"Create a short, catchy YouTube title (under 60 characters) for this text: \"{transcript}\""
-        try:
-            title_result = self.text_gen_pipeline(title_prompt, max_length=20, clean_up_tokenization_spaces=True)
-            title = title_result[0]['generated_text'].strip()
-        except Exception:
-            title = "AI Generated Clip"
+        if len(transcript) > 4000:
+            transcript = transcript[:4000]
 
-        # Generate Description
-        desc_prompt = f"Write a brief YouTube video description, ending with 3 relevant hashtags, for this text: \"{transcript}\""
+        prompt = f"""
+        Based on the following video transcript, please generate a YouTube video title and description.
+
+        **Rules:**
+        1. The title must be catchy, engaging, and under 60 characters.
+        2. The description should be a brief, one-sentence summary of the clip's content.
+        3. The description must end with exactly 3 relevant, popular hashtags.
+        4. Your response MUST be a valid JSON object with two keys: "title" and "description".
+
+        **Transcript:**
+        "{transcript}"
+        """
+
         try:
-            desc_result = self.text_gen_pipeline(desc_prompt, max_length=150, clean_up_tokenization_spaces=True)
-            description = desc_result[0]['generated_text'].strip()
-        except Exception:
-            description = f"{transcript}\n\n#aiclip #short"
+            self.message_queue.put(("log", "     ✍️ Contacting OpenRouter to generate title & description..."))
             
-        return {"title": title, "description": description}
+            # MODIFIED: Using OpenRouter. You can change the model to any one you like from their website.
+            # For example: "mistralai/mistral-7b-instruct-v0.2" or "google/gemma-7b-it"
+            # Using a free model as a default.
+            response = self.api_client.chat.completions.create(
+                model="mistralai/mistral-7b-instruct", 
+                messages=[
+                    {"role": "system", "content": "You are an expert social media manager who creates viral video titles and descriptions. You always respond in valid JSON format."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=200,
+                temperature=0.7,
+            )
+            content = response.choices[0].message.content
+            metadata = json.loads(content)
+            
+            if 'title' not in metadata or 'description' not in metadata:
+                 raise ValueError("API response did not contain 'title' or 'description' keys.")
 
+            return metadata
+
+        except Exception as e:
+            self.message_queue.put(("log", f"     ❌ OpenRouter title/description generation failed: {e}"))
+            return {"title": "AI Generated Clip", "description": f"An interesting clip. #video #clip #AI"}
 
     def find_best_clips(self, audio_path, timed_words, num_clips, clip_duration_arg):
         self._initialize_pipelines()
@@ -175,7 +199,6 @@ class ContentAnalyzer:
         
         if isinstance(clip_duration_arg, tuple):
             min_dur, max_dur = clip_duration_arg
-            self.message_queue.put(("log", f"     🧠 Using random clip duration between {min_dur} and {max_dur}s."))
         else:
             min_dur, max_dur = clip_duration_arg, clip_duration_arg
 
@@ -196,6 +219,7 @@ class ContentAnalyzer:
                 overlap_start = max(start_time, sentence['start'])
                 overlap_end = min(end_time, sentence['end'])
                 if overlap_end > overlap_start:
+                    duration = overlap_end - overlap_start
                     current_score += sentence['score']
 
             speaker_durations = {}

@@ -48,10 +48,8 @@ class CaptionGenerator:
         font_path = self.FONTS.get(font_name_for_image, self.FONTS["Gabarito"])
 
         try:
-            font_size_regular = 70 if font_name_for_image == "Montserrat" else self.REGULAR_FONT_SIZE
-            font_size_highlight = 90 if font_name_for_image == "Montserrat" else self.HIGHLIGHT_FONT_SIZE
-            font = ImageFont.truetype(str(font_path), font_size_regular)
-            highlight_font = ImageFont.truetype(str(font_path), font_size_highlight)
+            font = ImageFont.truetype(str(font_path), self.REGULAR_FONT_SIZE)
+            highlight_font = ImageFont.truetype(str(font_path), self.HIGHLIGHT_FONT_SIZE)
         except IOError as e:
             self.message_queue.put(("log", f"⚠️ Font {font_name_for_image} at {font_path} not found. Using default. Error: {e}"))
             default_path = self.FONTS["Gabarito"]
@@ -104,13 +102,13 @@ class CaptionGenerator:
             current_y += highlight_font.getbbox('A')[3] + 15
         return canvas
 
-    def create_caption_images(self, timed_words, font_name, style_name, temp_dir):
+    def create_caption_images(self, timed_words, font_choice, caption_style, temp_dir):
         output_images = []
         if not timed_words: return output_images
 
-        self.message_queue.put((f"log", f"     🎨 Generating '{style_name}' caption images..."))
+        self.message_queue.put((f"log", f"     🎨 Generating '{caption_style}' caption images..."))
         
-        max_words_per_group = 3 if style_name in ["Opus Green/White", "Opus Blue/White"] else 3
+        max_words_per_group = 3 if caption_style in ["Opus Green/White", "Opus Blue/White"] else 3
         word_groups = [timed_words[i:i + max_words_per_group] for i in range(0, len(timed_words), max_words_per_group)]
         
         img_idx = 0
@@ -118,7 +116,7 @@ class CaptionGenerator:
             group_text_list = [w['text'] for w in group]
             
             lines_of_words = []
-            if style_name in ["Opus Green/White", "Opus Blue/White"]:
+            if caption_style in ["Opus Green/White", "Opus Blue/White"]:
                 if len(group_text_list) == 3:
                     lines_of_words.append(group_text_list[0:2])
                     lines_of_words.append([group_text_list[2]])
@@ -132,7 +130,7 @@ class CaptionGenerator:
                     lines_of_words.append(group_text_list)
 
             for i, word in enumerate(group):
-                pil_image = self._create_image(lines_of_words, i, font_name, style_name)
+                pil_image = self._create_image(lines_of_words, i, font_choice, caption_style)
                 clip_duration = word['end'] - word['start']
                 if clip_duration > 0:
                     img_path = temp_dir / f"caption_{img_idx:04d}.png"
