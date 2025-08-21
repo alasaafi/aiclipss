@@ -1,14 +1,12 @@
-
 Flask
 Flask-SQLAlchemy
 Flask-Login
-werkzeug
+Werkzeug
 yt-dlp
 opencv-python
 mediapipe
-numpy
 Pillow
-torch==2.1.2
+torch
 transformers
 pyannote.audio
 ultralytics
@@ -17,4 +15,3 @@ waitress
 gunicorn
 faster-whisper
 SQLAlchemy
-git+https://github.com/jianfch/stable-ts.git
