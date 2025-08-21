@@ -586,26 +586,7 @@ def perform_upload():
     data = request.json
     return jsonify({"status": "upload_started", "message": "Upload process initiated."})
 
-# --- Main Execution (for local development) ---
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        # Create a default admin user if one doesn't exist
-        if not User.query.filter_by(username='admin').first():
-            admin_user = User(username='admin', email='admin@example.com', tier='business', is_admin=True)
-            admin_user.set_password('adminpass')
-            db.session.add(admin_user)
-            db.session.commit()
-            print("Admin user 'admin' created with password 'adminpass'")
 
-    # Check for FFmpeg on startup (for local development)
-    try:
-        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        print("WARNING: FFmpeg is not found or not working correctly. Please install FFmpeg and ensure it's in your system's PATH.")
-        sys.exit(1)
-        
-    # Note: This runs the Flask development server.
-    # For production on Render, use a WSGI server like Waitress via the `wsgi.py` file.
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+if __name__ == '__main__':
+    pass
+    
